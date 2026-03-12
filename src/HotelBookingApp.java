@@ -1,19 +1,33 @@
+import java.util.HashMap;
+import java.util.Map;
+
 public class HotelBookingApp {
+
+    private Map<String, Room> roomAvailability;
+    public HotelBookingApp() {
+        initializeInventory();
+    }
+
+    private void initializeInventory() {
+        roomAvailability = new HashMap<>();
+
+        roomAvailability.put("Single Room", new SingleRoom());
+        roomAvailability.put("Double Room", new DoubleRoom());
+        roomAvailability.put("Suite Room", new SuiteRoom());
+    }
+
+    public Map<String, Room> getRoomAvailability() {
+        return roomAvailability;
+    }
 
     public static void main(String[] args) {
 
-        Room single = new SingleRoom();
-        Room doubleRoom = new DoubleRoom();
-        Room suite = new SuiteRoom();
-
-        System.out.println("Single Room Details:");
-        single.displayRoomDetails();
-
-        System.out.println("\nDouble Room Details:");
-        doubleRoom.displayRoomDetails();
-
-        System.out.println("\nSuite Room Details:");
-        suite.displayRoomDetails();
+        HotelBookingApp inventory = new HotelBookingApp();
+        for (Map.Entry<String, Room> entry : inventory.getRoomAvailability().entrySet()) {
+            System.out.println(entry.getKey() + " Details:");
+            entry.getValue().displayRoomDetails();
+            System.out.println();
+        }
     }
 }
 
