@@ -1,58 +1,57 @@
 import java.util.*;
 
-class InvalidBookingException extends Exception {
-    public InvalidBookingException(String message) {
-        super(message);
-    }
-}
-
-class Reservation {
-    private String guestName;
-    private String roomType;
-
-    public Reservation(String guestName, String roomType) {
-        this.guestName = guestName;
-        this.roomType = roomType;
-    }
-
-    public String getGuestName() {
-        return guestName;
-    }
-
-    public String getRoomType() {
-        return roomType;
-    }
-}
-
 class RoomInventory {
-    private Set<String> availableRoomTypes;
+    private Map<String, Integer> roomAvailability;
 
     public RoomInventory() {
-        availableRoomTypes = new HashSet<>();
-        availableRoomTypes.add("Single");
-        availableRoomTypes.add("Double");
-        availableRoomTypes.add("Suite");
+        roomAvailability = new HashMap<>();
+        roomAvailability.put("Single", 5);
+        roomAvailability.put("Double", 3);
+        roomAvailability.put("Suite", 2);
     }
 
-    public boolean isRoomTypeAvailable(String roomType) {
-        return availableRoomTypes.contains(roomType); // case-sensitive
+    public void increaseRoom(String roomType) {
+        roomAvailability.put(roomType, roomAvailability.getOrDefault(roomType, 0) + 1);
+    }
+
+    public int getAvailability(String roomType) {
+        return roomAvailability.getOrDefault(roomType, 0);
     }
 }
 
-class ReservationValidator {
-    public void validate(String guestName, String roomType, RoomInventory inventory)
-            throws InvalidBookingException {
+class CancellationService {
 
-        if (guestName == null || guestName.trim().isEmpty()) {
-            throw new InvalidBookingException("Guest name cannot be empty.");
+    private Stack<String> releasedRoomIds;
+    private Map<String, String> reservationRoomTypeMap;
+
+    public CancellationService() {
+        releasedRoomIds = new Stack<>();
+        reservationRoomTypeMap = new HashMap<>();
+    }
+
+    public void registerBooking(String reservationId, String roomType) {
+        reservationRoomTypeMap.put(reservationId, roomType);
+    }
+
+    public void cancelBooking(String reservationId, RoomInventory inventory) {
+
+        if (!reservationRoomTypeMap.containsKey(reservationId)) {
+            System.out.println("Invalid reservation ID.");
+            return;
         }
 
-        if (roomType == null || roomType.trim().isEmpty()) {
-            throw new InvalidBookingException("Room type cannot be empty.");
-        }
+        String roomType = reservationRoomTypeMap.get(reservationId);
+        inventory.increaseRoom(roomType);
+        releasedRoomIds.push(reservationId);
 
-        if (!inventory.isRoomTypeAvailable(roomType)) {
-            throw new InvalidBookingException("Invalid room type selected.");
+        System.out.println("Booking cancelled successfully. Inventory restored for room type: " + roomType);
+    }
+
+    public void showRollbackHistory() {
+        System.out.println("\nRollback History (Most Recent First):");
+
+        while (!releasedRoomIds.isEmpty()) {
+            System.out.println("Released Reservation ID: " + releasedRoomIds.pop());
         }
     }
 }
@@ -60,28 +59,14 @@ class ReservationValidator {
 public class HotelBookingApp {
     public static void main(String[] args) {
 
-        Scanner sc = new Scanner(System.in);
         RoomInventory inventory = new RoomInventory();
-        ReservationValidator validator = new ReservationValidator();
+        CancellationService service = new CancellationService();
+        service.registerBooking("Single-1", "Single");
 
-        try {
-            System.out.println("Booking Validation");
-
-            System.out.print("Enter guest name: ");
-            String guestName = sc.nextLine();
-
-            System.out.print("Enter room type (Single/Double/Suite): ");
-            String roomType = sc.nextLine();
-
-            validator.validate(guestName, roomType, inventory);
-
-            Reservation r = new Reservation(guestName, roomType);
-            System.out.println("Booking successful for " + r.getGuestName());
-
-        } catch (InvalidBookingException e) {
-            System.out.println("Booking failed: " + e.getMessage());
-        }
-
-        sc.close();
+        System.out.println("Booking Cancellation");
+        service.cancelBooking("Single-1", inventory);
+        service.showRollbackHistory();
+        System.out.println("\nUpdated Single Room Availability: " +
+                inventory.getAvailability("Single"));
     }
 }
