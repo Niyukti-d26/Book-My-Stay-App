@@ -1,0 +1,3 @@
+Suite=1
+Single=3
+Double=2
